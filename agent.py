@@ -140,9 +140,14 @@ if __name__ == "__main__":
         # Total worth is usd + weightedAvg of crypt amount
         assets = usd + state[5] * crypt
 
+        # Store actions
+        actions = np.empty( len(data) , dtype=list)
 
-        for tick in data[1:]:
+
+        for i,tick in enumerate(data[1:]):
             action = agent.get_action(state)
+
+            actions[i] = action
 
             # Simulate trading
             #-----------
@@ -181,10 +186,10 @@ if __name__ == "__main__":
         scores.append(score)
         episodes.append(e)
         pylab.plot(episodes, scores, 'b')
-        # pylab.savefig("./save_graph/Cartpole_DQN.png")
+        pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
 
         # save the model
-        if e % 50 == 0:
+        if e % 5 == 0:
             agent.save_model("./save_model/agent.h5")
