@@ -15,7 +15,10 @@ def get_data (url):
         x['weightedAverage']] for x in data]
 
 def get_norm_data (url):
-    data = normalize( omit( raw_data(url) ) )[1:]
+    if '.npy' in url:
+        data = omit( np.load(url) )[1:]
+    else:
+        data = omit( raw_data(url) )[1:]
 
     return [[ \
         x['close'], x['open'], \

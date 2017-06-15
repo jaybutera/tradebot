@@ -68,8 +68,8 @@ class DQNAgent:
             return q_value
 
     # save sample <s,a,r,s'> to the replay memory
-    def replay_memory(self, state, action, reward, next_state):
-        self.memory.append((state, action, reward, next_state))
+    def replay_memory(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
@@ -93,13 +93,17 @@ class DQNAgent:
 
             # like Q Learning, get maximum Q value at s'
             # But from target model
-            max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
-            target[max_idx] = reward + self.discount_factor * \
-                self.target_model.predict(next_state)[0][max_idx]
+            if done:
+                target[max_idx] = reward
+                target[3] = reward
+            else:
+                max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
+                target[max_idx] = reward + self.discount_factor * \
+                    self.target_model.predict(next_state)[0][max_idx]
 
-            # Always update % to buy/sell
-            target[3] = reward + self.discount_factor * \
-                self.target_model.predict(next_state)[0][3]
+                # Always update % to buy/sell
+                target[3] = reward + self.discount_factor * \
+                    self.target_model.predict(next_state)[0][3]
 
             update_input[i] = state
             update_target[i] = target
@@ -120,7 +124,10 @@ class DQNAgent:
 if __name__ == "__main__":
     # In case of CartPole-v1, you can play until 500 time step
 
-    data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
+    #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
+    #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
+    data = dl.get_norm_data('eth_data.npy')
+    orig_data = dl.get_data('eth_data.npy')
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -138,15 +145,17 @@ if __name__ == "__main__":
         # Initial state
         state = data[0] + [usd, crypt]
         # Total worth is usd + weightedAvg of crypt amount
-        assets = usd + state[5] * crypt
+        assets = usd + orig_data[0][5] * crypt
 
         # Storage
         actions = np.empty( len(data) , dtype=list)
         usd_db = np.empty( len(data) )
         crypt_db = np.empty( len(data) )
 
-        for i,tick in enumerate(data[1:50]):
+        test = data[1:20]
+        for i,tick in enumerate(test):
             action = agent.get_action(state)
+            print(action)
 
             actions[i] = action
 
@@ -156,12 +165,18 @@ if __name__ == "__main__":
 
             if max_idx == 0: # Buy crypt
                 # (Weightedavg price) * (usd amount) * (% to buy)
-                crypt += state[5] * usd * action[3]
-                usd -= usd * action[3]
+                u = usd * action[3] # Amount to use
+                c = u / orig_data[i][5]  # Convert to crypto
+                crypt += c
+                usd -= u
+                print('buying ' , c , ' crypto with ' , u , 'usd')
             elif max_idx == 1: # Sell crypt
                 # (Weightedavg price) * (crypt amount) * (% to sell)
-                usd += state[5] * crypt * action[3]
-                crypt -= crypt * action[3]
+                c = crypt * action[3] # Amount to use
+                u = orig_data[i][5] * c # Convert to usd
+                usd += u
+                crypt -= c
+                print('selling ' , c , ' crypto for ' , u , 'usd')
             #-----------
 
             # Store info
@@ -170,19 +185,30 @@ if __name__ == "__main__":
 
 
             next_state = tick + [usd, crypt]
-            new_assets = usd + state[5] * crypt
+
+            # Handle edge cases
+            done = True if usd < 0. and crypt < 0. else False
+            usd = np.max([usd, 0.])
+            crypt = np.max([crypt, 0.])
+
+            new_assets = usd + orig_data[i][5] * crypt
+
             # Reward is % change of assets
             reward = new_assets / assets
+            reward = reward if not done else -200 # Punish if all assets are lost
             # Update assets
             assets = new_assets
 
 
             # save the sample <s, a, r, s'> to the replay memory
-            agent.replay_memory(state, action, reward, next_state)
+            agent.replay_memory(state, action, reward, next_state, done)
             # every time step do the training
             agent.train_replay()
             score += reward
             state = next_state
+
+            if done:
+                break
 
         # every episode update the target model to be same with model
         agent.update_target_model()
@@ -191,9 +217,9 @@ if __name__ == "__main__":
         scores.append(score)
         episodes.append(e)
         #pylab.plot(episodes, scores, 'b')
-        t = np.arange(len(data))
-        pylab.plot(t, usd_db, 'b')
-        pylab.plot(t, crypt_db, 'r')
+        t = np.arange(len(test))
+        pylab.plot(t, usd_db[:len(test)], 'b')
+        pylab.plot(t, crypt_db[:len(test)], 'r')
         pylab.show()
         #pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
