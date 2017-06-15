@@ -140,11 +140,12 @@ if __name__ == "__main__":
         # Total worth is usd + weightedAvg of crypt amount
         assets = usd + state[5] * crypt
 
-        # Store actions
+        # Storage
         actions = np.empty( len(data) , dtype=list)
+        usd_db = np.empty( len(data) )
+        crypt_db = np.empty( len(data) )
 
-
-        for i,tick in enumerate(data[1:]):
+        for i,tick in enumerate(data[1:50]):
             action = agent.get_action(state)
 
             actions[i] = action
@@ -162,6 +163,10 @@ if __name__ == "__main__":
                 usd += state[5] * crypt * action[3]
                 crypt -= crypt * action[3]
             #-----------
+
+            # Store info
+            usd_db[i] = usd
+            crypt_db[i] = crypt
 
 
             next_state = tick + [usd, crypt]
@@ -185,8 +190,12 @@ if __name__ == "__main__":
         # every episode, plot the play time
         scores.append(score)
         episodes.append(e)
-        pylab.plot(episodes, scores, 'b')
-        pylab.savefig("./save_graph/Cartpole_DQN.png")
+        #pylab.plot(episodes, scores, 'b')
+        t = np.arange(len(data))
+        pylab.plot(t, usd_db, 'b')
+        pylab.plot(t, crypt_db, 'r')
+        pylab.show()
+        #pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
 
