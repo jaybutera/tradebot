@@ -1,0 +1,52 @@
+import requests
+import numpy as np
+
+def get_data (url):
+    data = normalize( omit( raw_data(url) ) )[1:]
+
+    return [[ \
+        x['close'], x['open'], \
+        x['high'], x['low'], \
+        x['volume'], \
+        x['weightedAverage']] for x in data]
+
+def raw_data (url):
+    return requests.get(url).json()
+
+def omit (data):
+    for x in data:
+        del( x['date'] )
+        del( x['quoteVolume'] )
+
+    return data
+
+def normalize (data):
+    # Normalize volume
+    v = [x['volume'] for x in data]
+    v_max = np.max(v)
+    for x in data:
+        x['volume'] = x['volume'] / v_max
+
+    # Normalize prices to percent change
+    for i,x in reversed(list(enumerate(data))):
+        # Close
+        c = x['close']
+        x['close'] = (c - data[i-1]['close']) / c
+        # Open
+        c = x['open']
+        x['open'] = (c - data[i-1]['open']) / c
+        # High
+        c = x['high']
+        x['high'] = (c - data[i-1]['high']) / c
+        # Low
+        c = x['low']
+        x['low'] = (c - data[i-1]['low']) / c
+        # Weight avg
+        c = x['weightedAverage']
+        x['weightedAverage'] = (c - data[i-1]['weightedAverage']) / c
+
+    return data
+
+if __name__ == '__main__':
+    data = get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
+    print(np.max( [x['weightedAverage'] for x in data] ))
