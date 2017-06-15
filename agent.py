@@ -84,7 +84,7 @@ class DQNAgent:
         update_target = np.zeros((batch_size, self.action_size))
 
         for i in range(batch_size):
-            state, action, reward, next_state = mini_batch[i]
+            state, action, reward, next_state, done = mini_batch[i]
             state = np.array(state)
             state = state.reshape((1, state.size))
             next_state = np.array(next_state)
@@ -135,6 +135,9 @@ if __name__ == "__main__":
 
     scores, episodes = [], []
 
+    # Settings
+    log = True
+
     for e in range(EPISODES):
         score = 0
 
@@ -151,17 +154,19 @@ if __name__ == "__main__":
         actions = np.empty( len(data) , dtype=list)
         usd_db = np.empty( len(data) )
         crypt_db = np.empty( len(data) )
+        assets_db = np.empty( len(data) )
 
-        test = data[1:20]
-        for i,tick in enumerate(test):
+        data = data[1:20]
+        for i,tick in enumerate(data):
             action = agent.get_action(state)
-            print(action)
+            if log:
+                print(action)
 
             actions[i] = action
 
             # Simulate trading
             #-----------
-            max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
+            max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
 
             if max_idx == 0: # Buy crypt
                 # (Weightedavg price) * (usd amount) * (% to buy)
@@ -169,20 +174,25 @@ if __name__ == "__main__":
                 c = u / orig_data[i][5]  # Convert to crypto
                 crypt += c
                 usd -= u
-                print('buying ' , c , ' crypto with ' , u , 'usd')
+                if log:
+                    print('buying ' , c , ' crypto with ' , u , 'usd [own:', usd, 'usd')
             elif max_idx == 1: # Sell crypt
                 # (Weightedavg price) * (crypt amount) * (% to sell)
                 c = crypt * action[3] # Amount to use
                 u = orig_data[i][5] * c # Convert to usd
                 usd += u
                 crypt -= c
-                print('selling ' , c , ' crypto for ' , u , 'usd')
+                if log:
+                    print('selling ' , c , ' crypto for ' , u , 'usd [own:', usd, 'usd')
+            else:
+                if log:
+                    print('holding')
             #-----------
 
             # Store info
             usd_db[i] = usd
             crypt_db[i] = crypt
-
+            assets_db[i] = assets
 
             next_state = tick + [usd, crypt]
 
@@ -217,10 +227,24 @@ if __name__ == "__main__":
         scores.append(score)
         episodes.append(e)
         #pylab.plot(episodes, scores, 'b')
-        t = np.arange(len(test))
-        pylab.plot(t, usd_db[:len(test)], 'b')
-        pylab.plot(t, crypt_db[:len(test)], 'r')
+
+        '''
+        Plot normalized data
+        '''
+        t = np.arange(len(data))
+        # Usd
+        u = usd_db[:len(data)]
+        pylab.plot(t, np.divide(u, np.max(u)), 'b')
+        # Crypt
+        l = np.log(crypt_db[:len(data)])
+        l = [x if x > 0. else 0. for x in l]
+        pylab.plot(t, np.divide(l, np.max(l)), 'r')
+        # Assets
+        a = assets_db[:len(data)]
+        pylab.plot(t, np.divide(a, np.max(a)), 'g')
+
         pylab.show()
+
         #pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
