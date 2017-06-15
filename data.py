@@ -2,6 +2,19 @@ import requests
 import numpy as np
 
 def get_data (url):
+
+    if '.npy' in url:
+        data = omit( np.load(url) )[1:]
+    else:
+        data = omit( raw_data(url) )[1:]
+
+    return [[ \
+        x['close'], x['open'], \
+        x['high'], x['low'], \
+        x['volume'], \
+        x['weightedAverage']] for x in data]
+
+def get_norm_data (url):
     data = normalize( omit( raw_data(url) ) )[1:]
 
     return [[ \
