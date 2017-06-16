@@ -126,8 +126,8 @@ if __name__ == "__main__":
 
     #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
-    data = dl.get_norm_data('eth_data.npy')
-    orig_data = dl.get_data('eth_data.npy')
+    data = dl.get_norm_data('eth_data.npy')[3000:]
+    orig_data = dl.get_data('eth_data.npy')[3000:]
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -146,6 +146,7 @@ if __name__ == "__main__":
         crypt = 0.
 
         # Initial state
+        print('data', data)
         state = data[0] + [usd, crypt]
         # Total worth is usd + weightedAvg of crypt amount
         assets = usd + orig_data[0][5] * crypt
@@ -156,7 +157,6 @@ if __name__ == "__main__":
         crypt_db = np.empty( len(data) )
         assets_db = np.empty( len(data) )
 
-        data = data[1:20]
         for i,tick in enumerate(data):
             action = agent.get_action(state)
             if log:
@@ -175,7 +175,8 @@ if __name__ == "__main__":
                 crypt += c
                 usd -= u
                 if log:
-                    print('buying ' , c , ' crypto with ' , u , 'usd [own:', usd, 'usd')
+                    print('buying ' , c , ' crypto with ' , u , \
+                            'usd [own:', usd, 'usd | ', crypt, ' crypt')
             elif max_idx == 1: # Sell crypt
                 # (Weightedavg price) * (crypt amount) * (% to sell)
                 c = crypt * action[3] # Amount to use
@@ -183,7 +184,8 @@ if __name__ == "__main__":
                 usd += u
                 crypt -= c
                 if log:
-                    print('selling ' , c , ' crypto for ' , u , 'usd [own:', usd, 'usd')
+                    print('selling ' , c , ' crypto for ' , u , \
+                            'usd [own:', usd, 'usd | ', crypt, ' crypt')
             else:
                 if log:
                     print('holding')
@@ -231,20 +233,25 @@ if __name__ == "__main__":
         '''
         Plot normalized data
         '''
-        t = np.arange(len(data))
-        # Usd
-        u = usd_db[:len(data)]
-        pylab.plot(t, np.divide(u, np.max(u)), 'b')
-        # Crypt
-        l = np.log(crypt_db[:len(data)])
-        l = [x if x > 0. else 0. for x in l]
-        pylab.plot(t, np.divide(l, np.max(l)), 'r')
-        # Assets
-        a = assets_db[:len(data)]
-        pylab.plot(t, np.divide(a, np.max(a)), 'g')
+        '''
+        try:
+            t = np.arange(len(data))
+            # Usd
+            u = usd_db[:len(data)]
+            pylab.plot(t, np.divide(u, np.max(u)), 'b')
+            # Crypt
+            l = np.log(crypt_db[:len(data)])
+            l = [x if x > 0. else 0. for x in l]
+            pylab.plot(t, np.divide(l, np.max(l)), 'r')
+            # Assets
+            a = assets_db[:len(data)]
+            pylab.plot(t, np.divide(a, np.max(a)), 'g')
 
-        pylab.show()
+            pylab.show()
+        except:
+            print(e)
 
+        '''
         #pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
