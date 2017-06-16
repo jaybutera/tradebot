@@ -48,7 +48,7 @@ class DQNAgent:
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(24, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(self.action_size, activation='linear', kernel_initializer='he_uniform'))
+        model.add(Dense(self.action_size, activation='sigmoid', kernel_initializer='he_uniform'))
         model.summary()
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         return model
@@ -126,8 +126,8 @@ if __name__ == "__main__":
 
     #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
-    data = dl.get_norm_data('eth_data.npy')[3000:]
-    orig_data = dl.get_data('eth_data.npy')[3000:]
+    data = dl.get_norm_data('eth_data.npy')[1000:2000]
+    orig_data = dl.get_data('eth_data.npy')[1000:2000]
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = True
+    log = False
 
     for e in range(EPISODES):
         score = 0
@@ -146,7 +146,6 @@ if __name__ == "__main__":
         crypt = 0.
 
         # Initial state
-        print('data', data)
         state = data[0] + [usd, crypt]
         # Total worth is usd + weightedAvg of crypt amount
         assets = usd + orig_data[0][5] * crypt
@@ -207,7 +206,7 @@ if __name__ == "__main__":
 
             # Reward is % change of assets
             reward = new_assets / assets
-            reward = reward if not done else -200 # Punish if all assets are lost
+            reward = reward if not done else -10 # Punish if all assets are lost
             # Update assets
             assets = new_assets
 
@@ -233,25 +232,24 @@ if __name__ == "__main__":
         '''
         Plot normalized data
         '''
-        '''
-        try:
-            t = np.arange(len(data))
-            # Usd
-            u = usd_db[:len(data)]
-            pylab.plot(t, np.divide(u, np.max(u)), 'b')
-            # Crypt
-            l = np.log(crypt_db[:len(data)])
-            l = [x if x > 0. else 0. for x in l]
-            pylab.plot(t, np.divide(l, np.max(l)), 'r')
-            # Assets
-            a = assets_db[:len(data)]
-            pylab.plot(t, np.divide(a, np.max(a)), 'g')
+        if log:
+            try:
+                t = np.arange(len(data))
+                # Usd
+                u = usd_db[:len(data)]
+                pylab.plot(t, np.divide(u, np.max(u)), 'b')
+                # Crypt
+                l = np.log(crypt_db[:len(data)])
+                l = [x if x > 0. else 0. for x in l]
+                pylab.plot(t, np.divide(l, np.max(l)), 'r')
+                # Assets
+                a = assets_db[:len(data)]
+                pylab.plot(t, np.divide(a, np.max(a)), 'g')
 
-            pylab.show()
-        except:
-            print(e)
+                pylab.show()
+            except:
+                print(e)
 
-        '''
         #pylab.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
