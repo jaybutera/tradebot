@@ -78,7 +78,10 @@ class DQNAgent:
         if len(self.memory) < self.train_start:
             return
         batch_size = min(self.batch_size, len(self.memory))
-        mini_batch = random.sample(self.memory, batch_size)
+        #mini_batch = random.sample(self.memory, batch_size)
+        # Mini batch must hold temporal information. No rand sampling
+        rand_idx = random.randint(0, len(self.memory)-1)
+        mini_batch = [self.memory[rand_idx-i] for i in range(batch_size)]
 
         update_input = np.zeros((batch_size, self.state_size))
         update_target = np.zeros((batch_size, self.action_size))
@@ -110,7 +113,8 @@ class DQNAgent:
 
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
-        self.model.fit(update_input, update_target, batch_size=batch_size, epochs=1, verbose=0)
+        self.model.fit(update_input, update_target, batch_size=batch_size, \
+                shuffle=False, epochs=1, verbose=0)
 
     # load the saved model
     def load_model(self, name):
