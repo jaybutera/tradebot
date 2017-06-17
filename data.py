@@ -16,9 +16,9 @@ def get_data (url):
 
 def get_norm_data (url):
     if '.npy' in url:
-        data = omit( np.load(url) )[1:]
+        data = normalize( omit( np.load(url) )[1:] )
     else:
-        data = omit( raw_data(url) )[1:]
+        data = normalize( omit( raw_data(url) )[1:] )
 
     return [[ \
         x['close'], x['open'], \

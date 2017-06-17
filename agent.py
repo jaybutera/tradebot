@@ -136,7 +136,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = False
+    log = True
 
     for e in range(EPISODES):
         score = 0
