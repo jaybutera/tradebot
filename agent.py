@@ -46,11 +46,14 @@ class DQNAgent:
     # state is input and Q Value of each action is output of network
     def build_model(self):
         model = Sequential()
+        '''
         model.add(TimeDistributed(Dense(24, activation='sigmoid', \
             kernel_initializer='he_uniform'), \
-            input_shape=(None,self.state_size)))
+            input_shape=(None,1,self.state_size)))
+        '''
         model.add(LSTM(24, activation='sigmoid',
-            kernel_initializer='he_uniform'))
+            kernel_initializer='he_uniform',
+            input_shape=(None,self.state_size)))
         model.add(Dense(24, activation='sigmoid', kernel_initializer='he_uniform'))
         model.add(Dense(self.action_size, activation='sigmoid', kernel_initializer='he_uniform'))
         model.summary()
@@ -115,8 +118,8 @@ class DQNAgent:
             update_input[i] = state
             update_target[i] = target
 
-        update_input=update_input.reshape(update_input.shape[0],update_input.shape[1])
-        update_target=update_target.reshape(1,update_target.shape[0],update_target.shape[1])
+        update_input=update_input.reshape(update_input.shape[0],1,update_input.shape[1])
+        update_target=update_target.reshape(update_target.shape[0],update_target.shape[1])
 
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
