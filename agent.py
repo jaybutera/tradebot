@@ -5,7 +5,7 @@ import random
 import data as dl
 import numpy as np
 from collections import deque
-from keras.layers import Dense
+from keras.layers import Dense, LSTM, TimeDistributed, Flatten
 from keras.optimizers import Adam
 from keras.models import Sequential
 
@@ -46,8 +46,12 @@ class DQNAgent:
     # state is input and Q Value of each action is output of network
     def build_model(self):
         model = Sequential()
-        model.add(Dense(24, input_dim=self.state_size, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(24, activation='relu', kernel_initializer='he_uniform'))
+        model.add(TimeDistributed(Dense(24, activation='sigmoid', \
+            kernel_initializer='he_uniform'), \
+            input_shape=(None,self.state_size)))
+        model.add(LSTM(24, activation='sigmoid',
+            kernel_initializer='he_uniform'))
+        model.add(Dense(24, activation='sigmoid', kernel_initializer='he_uniform'))
         model.add(Dense(self.action_size, activation='sigmoid', kernel_initializer='he_uniform'))
         model.summary()
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
@@ -63,7 +67,7 @@ class DQNAgent:
             return np.random.rand(self.action_size,)
         else:
             state = np.array(state)
-            state = state.reshape((1, state.size))
+            state = state.reshape((1,1,state.size))
             q_value = self.model.predict(state)[0]
             return q_value
 
@@ -89,9 +93,9 @@ class DQNAgent:
         for i in range(batch_size):
             state, action, reward, next_state, done = mini_batch[i]
             state = np.array(state)
-            state = state.reshape((1, state.size))
+            state = state.reshape((1,1,state.size))
             next_state = np.array(next_state)
-            next_state = next_state.reshape((1, next_state.size))
+            next_state = next_state.reshape((1,1,next_state.size))
             target = self.model.predict(state)[0]
 
             # like Q Learning, get maximum Q value at s'
@@ -110,6 +114,9 @@ class DQNAgent:
 
             update_input[i] = state
             update_target[i] = target
+
+        update_input=update_input.reshape(update_input.shape[0],update_input.shape[1])
+        update_target=update_target.reshape(1,update_target.shape[0],update_target.shape[1])
 
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
@@ -130,8 +137,8 @@ if __name__ == "__main__":
 
     #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
-    data = dl.get_norm_data('eth_data.npy')[1000:2000]
-    orig_data = dl.get_data('eth_data.npy')[1000:2000]
+    data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
+    orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -140,7 +147,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = True
+    log = False
 
     for e in range(EPISODES):
         score = 0
