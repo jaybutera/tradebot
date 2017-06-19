@@ -126,7 +126,7 @@ class DQNAgent:
         self.model.fit(update_input, update_target, batch_size=batch_size, \
                 shuffle=False, epochs=1, verbose=0)
 
-    # load the saved model
+        # load the saved model
     def load_model(self, name):
         self.model.load_weights(name)
 
@@ -250,7 +250,7 @@ if __name__ == "__main__":
         '''
         Plot normalized data
         '''
-        if verbose == 1:
+        if verbose > 0:
             try:
                 t = np.arange(len(data))
                 # Usd

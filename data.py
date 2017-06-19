@@ -9,7 +9,7 @@ def test_data_lin (size):
     data = [[l,l,l,l,v,l] for l,v in zip(lin, volume)]
     norm_data = [[l,l,l,l,v,l] for l,v in zip(norm_lin, volume)]
 
-    return data, norm_data
+    return data[1:], norm_data[1:] # Remove 0s
 
 def get_data (url):
 
