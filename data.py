@@ -1,6 +1,16 @@
 import requests
 import numpy as np
 
+def test_data_lin (size):
+    lin = np.arange(size)
+    norm_lin = [x/size for x in lin]
+    volume = np.ones(size)
+
+    data = [[l,l,l,l,v,l] for l,v in zip(lin, volume)]
+    norm_data = [[l,l,l,l,v,l] for l,v in zip(norm_lin, volume)]
+
+    return data, norm_data
+
 def get_data (url):
 
     if '.npy' in url:

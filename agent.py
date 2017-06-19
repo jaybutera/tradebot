@@ -52,7 +52,7 @@ class DQNAgent:
             input_shape=(None,1,self.state_size)))
         '''
         model.add(LSTM(24, activation='sigmoid',
-            kernel_initializer='he_uniform',
+            kernel_initializer='he_uniform',# stateful=True,
             input_shape=(None,self.state_size)))
         model.add(Dense(24, activation='sigmoid', kernel_initializer='he_uniform'))
         model.add(Dense(self.action_size, activation='sigmoid', kernel_initializer='he_uniform'))
@@ -140,8 +140,11 @@ if __name__ == "__main__":
 
     #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
+    '''
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
+    '''
+    data, orig_data = dl.test_data_lin(1000)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -150,7 +153,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = False
+    log = True
     verbose = 1
 
     for e in range(EPISODES):
