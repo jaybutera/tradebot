@@ -151,6 +151,7 @@ if __name__ == "__main__":
 
     # Settings
     log = False
+    verbose = 1
 
     for e in range(EPISODES):
         score = 0
@@ -172,7 +173,7 @@ if __name__ == "__main__":
 
         for i,tick in enumerate(data):
             action = agent.get_action(state)
-            if log:
+            if log and verbose == 2:
                 print(action)
 
             actions[i] = action
@@ -187,7 +188,7 @@ if __name__ == "__main__":
                 c = u / orig_data[i][5]  # Convert to crypto
                 crypt += c
                 usd -= u
-                if log:
+                if log and verbose == 2:
                     print('buying ' , c , ' crypto with ' , u , \
                             'usd [own:', usd, 'usd | ', crypt, ' crypt')
             elif max_idx == 1: # Sell crypt
@@ -196,11 +197,11 @@ if __name__ == "__main__":
                 u = orig_data[i][5] * c # Convert to usd
                 usd += u
                 crypt -= c
-                if log:
+                if log and verbose == 2:
                     print('selling ' , c , ' crypto for ' , u , \
                             'usd [own:', usd, 'usd | ', crypt, ' crypt')
             else:
-                if log:
+                if log and verbose == 2:
                     print('holding')
             #-----------
 
@@ -246,7 +247,7 @@ if __name__ == "__main__":
         '''
         Plot normalized data
         '''
-        if log:
+        if verbose == 1:
             try:
                 t = np.arange(len(data))
                 # Usd
@@ -260,7 +261,12 @@ if __name__ == "__main__":
                 a = assets_db[:len(data)]
                 pylab.plot(t, np.divide(a, np.max(a)), 'g')
 
-                pylab.show()
+                pylab.savefig("./save_graph/activity_e" + str(e) + ".png")
+                if log:
+                    pylab.show()
+
+                # Clear plot
+                plt.clf()
             except:
                 print(e)
 
