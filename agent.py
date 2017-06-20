@@ -1,5 +1,4 @@
 import sys
-import gym
 import pylab
 import random
 import data as dl
@@ -51,11 +50,10 @@ class DQNAgent:
             kernel_initializer='he_uniform'), \
             input_shape=(None,1,self.state_size)))
         '''
-        model.add(LSTM(24, activation='sigmoid',
-            kernel_initializer='he_uniform',# stateful=True,
+        model.add(LSTM(24, activation='sigmoid', init='uniform',
             input_shape=(None,self.state_size)))
-        model.add(Dense(24, activation='sigmoid', kernel_initializer='he_uniform'))
-        model.add(Dense(self.action_size, activation='sigmoid', kernel_initializer='he_uniform'))
+        model.add(Dense(24, activation='sigmoid', init='he_uniform'))
+        model.add(Dense(self.action_size, activation='sigmoid', init='he_uniform'))
         model.summary()
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         return model
@@ -124,7 +122,7 @@ class DQNAgent:
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
         self.model.fit(update_input, update_target, batch_size=batch_size, \
-                shuffle=False, epochs=1, verbose=0)
+                shuffle=False, nb_epoch=1, verbose=0)
 
         # load the saved model
     def load_model(self, name):
@@ -223,7 +221,7 @@ if __name__ == "__main__":
             new_assets = usd + orig_data[i][5] * crypt
 
             # Reward is % change of assets
-            reward = new_assets / assets
+            reward = new_assets / assets - 1
             reward = reward if not done else -10 # Punish if all assets are lost
             # Update assets
             assets = new_assets
