@@ -151,7 +151,7 @@ if __name__ == "__main__":
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     '''
-    data, orig_data = dl.test_data_sin(250)
+    orig_data, data = dl.test_data_sin(250)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = False
+    log = True
     verbose = 1
 
     for e in range(EPISODES):
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
         for i,tick in enumerate(data):
             action = agent.get_action(state)
-            if log and verbose == 2:
+            if log and verbose > 1:
                 print(action)
 
             actions[i] = action
@@ -198,7 +198,7 @@ if __name__ == "__main__":
                 c = u / orig_data[i][5]  # Convert to crypto
                 crypt += c
                 usd -= u
-                if log and verbose == 2:
+                if log and verbose > 1:
                     print('buying ' , c , ' crypto with ' , u , \
                             'usd [own:', usd, 'usd | ', crypt, ' crypt')
             elif max_idx == 1: # Sell crypt
@@ -207,11 +207,11 @@ if __name__ == "__main__":
                 u = orig_data[i][5] * c # Convert to usd
                 usd += u
                 crypt -= c
-                if log and verbose == 2:
+                if log and verbose > 1:
                     print('selling ' , c , ' crypto for ' , u , \
                             'usd [own:', usd, 'usd | ', crypt, ' crypt')
             else:
-                if log and verbose == 2:
+                if log and verbose > 1:
                     print('holding')
             #-----------
 
@@ -223,7 +223,7 @@ if __name__ == "__main__":
             next_state = tick + [usd, crypt]
 
             # Handle edge cases
-            done = True if usd < 0. and crypt < 0. else False
+            done = True if usd < 0.5 and crypt < 0.5 else False
             usd = np.max([usd, 0.])
             crypt = np.max([crypt, 0.])
 
@@ -281,7 +281,9 @@ if __name__ == "__main__":
                 # Assets
                 a = assets_db[:len(data)]
                 plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
-                plt.plot(t, data, 'k', label='norm data')
+                # Normalized weighted avg data
+                w_avg = [x[5] for x in data]
+                plt.plot(t, w_avg, 'k', label='norm data')
                 # Display legend
                 plt.legend(loc='lower right')
 

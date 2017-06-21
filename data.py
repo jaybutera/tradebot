@@ -2,12 +2,13 @@ import requests
 import numpy as np
 
 def test_data_sin (size):
-    lin = [np.sin(i*.3) for i in np.arange(size)]
-    norm_lin = [x/size for x in lin]
+    s = [np.sin(i*.3)+1.1 for i in np.arange(size)]
+    m = np.max(s)
+    norm_s = [x/m for x in s]
     volume = np.ones(size)
 
-    data = [[l,l,l,l,v,l] for l,v in zip(lin, volume)]
-    norm_data = [[l,l,l,l,v,l] for l,v in zip(norm_lin, volume)]
+    data = [[l,l,l,l,v,l] for l,v in zip(s, volume)]
+    norm_data = [[l,l,l,l,v,l] for l,v in zip(norm_s, volume)]
 
     return data[1:], norm_data[1:] # Remove 0s
 
