@@ -2,7 +2,7 @@ import requests
 import numpy as np
 
 def test_data_sin (size):
-    lin = [np.sin(i) for i in range(size)]
+    lin = [np.sin(i) for i in np.linspace(size,.5)]
     norm_lin = [x/size for x in lin]
     volume = np.ones(size)
 
