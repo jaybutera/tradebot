@@ -127,7 +127,7 @@ class DQNAgent:
             self.model.fit(ui, ut, batch_size=1, \
                     shuffle=False, nb_epoch=1, verbose=0)
 
-        # load the saved model
+    # load the saved model
     def load_model(self, name):
         self.model.load_weights(name)
 
@@ -237,8 +237,10 @@ if __name__ == "__main__":
             #print(lstm_layer.states)
             # Store lstm states
             state_record = lstm_layer.states
-            lstm_layer.reset_states()
             # Reset states
+            agent.model.layers[0].reset_states()
+            agent.target_model.layers[0].reset_states()
+
             agent.train_replay()
             # Restore states
             agent.model.layers[0].states = state_record
