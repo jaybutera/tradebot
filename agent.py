@@ -1,5 +1,5 @@
 import sys
-import pylab
+from matplotlib import pyplot as plt
 import random
 import data as dl
 import numpy as np
@@ -121,11 +121,17 @@ class DQNAgent:
 
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
+        '''
         for ui, ut in zip(update_input, update_target):
             ui = ui.reshape(1,1,ui.size)
             ut = ut.reshape(1,ut.size)
             self.model.fit(ui, ut, batch_size=1, \
                     shuffle=False, nb_epoch=1, verbose=0)
+        '''
+        ui = update_input[-1].reshape(1,1,update_input[-1].size)
+        ut = update_target[-1].reshape(1,update_target[-1].size)
+        self.model.fit(ui, ut, batch_size=1, \
+                shuffle=False, nb_epoch=1, verbose=0)
 
     # load the saved model
     def load_model(self, name):
@@ -145,7 +151,7 @@ if __name__ == "__main__":
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     '''
-    data, orig_data = dl.test_data_sin(500)
+    data, orig_data = dl.test_data_sin(250)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -154,7 +160,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = True
+    log = False
     verbose = 1
 
     for e in range(EPISODES):
@@ -257,7 +263,7 @@ if __name__ == "__main__":
         # every episode, plot the play time
         scores.append(score)
         episodes.append(e)
-        #pylab.plot(episodes, scores, 'b')
+        #plt.plot(episodes, scores, 'b')
 
         '''
         Plot normalized data
@@ -267,25 +273,28 @@ if __name__ == "__main__":
                 t = np.arange(len(data))
                 # Usd
                 u = usd_db[:len(data)]
-                pylab.plot(t, np.divide(u, np.max(u)), 'b')
+                plt.plot(t, np.divide(u, np.max(u)), 'b', label='usd')
                 # Crypt
-                l = np.log(crypt_db[:len(data)])
+                l = crypt_db[:len(data)]
                 l = [x if x > 0. else 0. for x in l]
-                pylab.plot(t, np.divide(l, np.max(l)), 'r')
+                plt.plot(t, np.divide(l, np.max(l)), 'r', label='crypto')
                 # Assets
                 a = assets_db[:len(data)]
-                pylab.plot(t, np.divide(a, np.max(a)), 'g')
+                plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
+                plt.plot(t, data, 'k', label='norm data')
+                # Display legend
+                plt.legend(loc='lower right')
 
-                pylab.savefig("./save_graph/activity_e" + str(e) + ".png")
+                plt.savefig("./save_graph/activity_e" + str(e) + ".png")
                 if log:
-                    pylab.show()
+                    plt.show()
 
                 # Clear plot
                 plt.clf()
             except:
                 print(e)
 
-        #pylab.savefig("./save_graph/Cartpole_DQN.png")
+        #plt.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
 
