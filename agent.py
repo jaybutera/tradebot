@@ -233,7 +233,16 @@ if __name__ == "__main__":
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
             # every time step do the training
+            lstm_layer = agent.model.layers[0]
+            #print(lstm_layer.states)
+            # Store lstm states
+            state_record = lstm_layer.states
+            lstm_layer.reset_states()
+            # Reset states
             agent.train_replay()
+            # Restore states
+            agent.model.layers[0].states = state_record
+
             score += reward
             state = next_state
 
