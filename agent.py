@@ -52,7 +52,7 @@ class DQNAgent:
         '''
         model.add(LSTM(24, activation='sigmoid', init='uniform', stateful=True,
             batch_input_shape=(1,1,self.state_size)))
-        model.add(Dense(24, activation='sigmoid', init='he_uniform'))
+        #model.add(Dense(24, activation='sigmoid', init='he_uniform'))
         model.add(Dense(self.action_size, activation='sigmoid', init='he_uniform'))
         model.summary()
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     '''
-    data, orig_data = dl.test_data_lin(1000)
+    data, orig_data = dl.test_data_sin(500)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     # Settings
     log = True
-    verbose = 0
+    verbose = 1
 
     for e in range(EPISODES):
         score = 0
