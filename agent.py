@@ -50,8 +50,8 @@ class DQNAgent:
             kernel_initializer='he_uniform'), \
             input_shape=(None,1,self.state_size)))
         '''
-        model.add(LSTM(24, activation='sigmoid', init='uniform',
-            input_shape=(None,self.state_size)))
+        model.add(LSTM(24, activation='sigmoid', init='uniform', stateful=True,
+            batch_input_shape=(1,1,self.state_size)))
         model.add(Dense(24, activation='sigmoid', init='he_uniform'))
         model.add(Dense(self.action_size, activation='sigmoid', init='he_uniform'))
         model.summary()
@@ -116,13 +116,16 @@ class DQNAgent:
             update_input[i] = state
             update_target[i] = target
 
-        update_input=update_input.reshape(update_input.shape[0],1,update_input.shape[1])
+        update_input=update_input.reshape(update_input.shape[0],update_input.shape[1])
         update_target=update_target.reshape(update_target.shape[0],update_target.shape[1])
 
         # make minibatch which includes target q value and predicted q value
         # and do the model fit!
-        self.model.fit(update_input, update_target, batch_size=batch_size, \
-                shuffle=False, nb_epoch=1, verbose=0)
+        for ui, ut in zip(update_input, update_target):
+            ui = ui.reshape(1,1,ui.size)
+            ut = ut.reshape(1,ut.size)
+            self.model.fit(ui, ut, batch_size=1, \
+                    shuffle=False, nb_epoch=1, verbose=0)
 
         # load the saved model
     def load_model(self, name):
@@ -152,7 +155,7 @@ if __name__ == "__main__":
 
     # Settings
     log = True
-    verbose = 1
+    verbose = 0
 
     for e in range(EPISODES):
         score = 0
