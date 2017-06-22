@@ -64,12 +64,16 @@ class DQNAgent:
 
     # get action from model using epsilon-greedy policy
     def get_action(self, state):
-        if np.random.rand() <= self.epsilon:
-            return np.random.rand(self.action_size,)
+        #if np.random.rand() <= self.epsilon:
+        if True:
+            q_value = np.random.rand(self.action_size,)
+            q_value[3] = 1.
+            return q_value
         else:
             state = np.array(state)
             state = state.reshape((1,1,state.size))
             q_value = self.model.predict(state)[0]
+            q_value[3] = 1.
             return q_value
 
     # save sample <s,a,r,s'> to the replay memory
@@ -160,7 +164,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     # Settings
-    log = True
+    log = False
     verbose = 1
 
     for e in range(EPISODES):
@@ -247,7 +251,7 @@ if __name__ == "__main__":
             agent.model.layers[0].reset_states()
             agent.target_model.layers[0].reset_states()
 
-            agent.train_replay()
+            #agent.train_replay()
             # Restore states
             agent.model.layers[0].states = state_record
 
