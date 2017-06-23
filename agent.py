@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import random
 import data as dl
 import numpy as np
+from sim import Simulator
 from collections import deque
 from keras.layers import Dense, LSTM, TimeDistributed, Flatten
 from keras.optimizers import Adam
@@ -167,81 +168,30 @@ if __name__ == "__main__":
     log = False
     verbose = 1
 
+    sim = Simulator(orig_data, data)
+
     for e in range(EPISODES):
         score = 0
 
-        # Starting amounts
-        usd = 1000.
-        crypt = 0.
-
-        # Initial state
-        state = data[0] + [usd, crypt]
-        # Total worth is usd + weightedAvg of crypt amount
-        assets = usd + orig_data[0][5] * crypt
-
-        # Storage
-        actions = np.empty( len(data) , dtype=list)
-        usd_db = np.empty( len(data) )
-        crypt_db = np.empty( len(data) )
-        assets_db = np.empty( len(data) )
-
-        for i,tick in enumerate(data):
+        #for i in range(len(data)):
+        while not sim.sim_done():
+            state = sim.state # Get state
             action = agent.get_action(state)
             if log and verbose > 1:
                 print(action)
 
-            actions[i] = action
+            #actions[i] = action
 
             # Simulate trading
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
-
-            if max_idx == 0: # Buy crypt
-                # (Weightedavg price) * (usd amount) * (% to buy)
-                u = usd * action[3] # Amount to use
-                c = u / orig_data[i][5]  # Convert to crypto
-                crypt += c
-                usd -= u
-                if log and verbose > 1:
-                    print('buying ' , c , ' crypto with ' , u , \
-                            'usd [own:', usd, 'usd | ', crypt, ' crypt')
-            elif max_idx == 1: # Sell crypt
-                # (Weightedavg price) * (crypt amount) * (% to sell)
-                c = crypt * action[3] # Amount to use
-                u = orig_data[i][5] * c # Convert to usd
-                usd += u
-                crypt -= c
-                if log and verbose > 1:
-                    print('selling ' , c , ' crypto for ' , u , \
-                            'usd [own:', usd, 'usd | ', crypt, ' crypt')
-            else:
-                if log and verbose > 1:
-                    print('holding')
+            reward, done = sim.step(max_idx, action[3])
+            next_state = sim.state # Get new state
             #-----------
-
-            # Store info
-            usd_db[i] = usd
-            crypt_db[i] = crypt
-            assets_db[i] = assets
-
-            next_state = tick + [usd, crypt]
-
-            # Handle edge cases
-            done = True if usd < 0.5 and crypt < 0.5 else False
-            usd = np.max([usd, 0.])
-            crypt = np.max([crypt, 0.])
-
-            new_assets = usd + orig_data[i][5] * crypt
-
-            # Reward is % change of assets
-            reward = new_assets / assets - 1
-            reward = reward if not done else -10 # Punish if all assets are lost
-            # Update assets
-            assets = new_assets
-
 
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
+
             # every time step do the training
             lstm_layer = agent.model.layers[0]
             #print(lstm_layer.states)
@@ -251,7 +201,7 @@ if __name__ == "__main__":
             agent.model.layers[0].reset_states()
             agent.target_model.layers[0].reset_states()
 
-            #agent.train_replay()
+            agent.train_replay()
             # Restore states
             agent.model.layers[0].states = state_record
 

@@ -7,6 +7,9 @@ class Simulator(object):
         self.usd = usd
         self.crypt = crypt
 
+        print('data len', len(data))
+        print('orig_data len', len(orig_data))
+
         # Initial state
         self.state = data[0] + [self.usd, self.crypt]
         # Total worth is usd + weightedAvg of crypt amount
@@ -74,7 +77,13 @@ class Simulator(object):
         # Update assets
         self.assets = new_assets
 
+        # Update state
+        self.state = self.data + [self.usd, self.crypt]
+
         # Update time
         self.t += 1
 
         return reward, done
+
+    def sim_done(self):
+        return self.t == len(self.data)
