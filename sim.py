@@ -4,27 +4,28 @@ class Simulator(object):
     def __init__ (self, orig_data, data, usd=1000., crypt=0.):
         self.data = data
         self.orig_data = orig_data
+
+        self.reset()
+
+    def reset (self, usd=1000., crypt=0.):
         self.usd = usd
         self.crypt = crypt
 
-        print('data len', len(data))
-        print('orig_data len', len(orig_data))
-
         # Initial state
-        self.state = data[0] + [self.usd, self.crypt]
+        self.state = self.data[0] + [self.usd, self.crypt]
         # Total worth is usd + weightedAvg of crypt amount
         self.assets = self.usd + self.orig_data[0][5] * self.crypt
         # Time tracker
         self.t = 0
 
         # Storage
-        self.usd_db = np.empty( len(data) )
-        self.crypt_db = np.empty( len(data) )
-        self.assets_db = np.empty( len(data) )
+        self.usd_db = np.empty( len(self.data) )
+        self.crypt_db = np.empty( len(self.data) )
+        self.assets_db = np.empty( len(self.data) )
 
         # Settings
         self.log = True
-        self.verbose = 2
+        self.verbose = 1
 
     def step (self, move, perc):
         '''
@@ -33,6 +34,9 @@ class Simulator(object):
         move = 1 | Sell
         move = 2 | Hold
         '''
+
+        if self.log and self.verbose > 2:
+            print('using', perc, '%')
 
         # Simulate trading
         # ----------------
@@ -78,7 +82,7 @@ class Simulator(object):
         self.assets = new_assets
 
         # Update state
-        self.state = self.data + [self.usd, self.crypt]
+        self.state = self.data[self.t] + [self.usd, self.crypt]
 
         # Update time
         self.t += 1

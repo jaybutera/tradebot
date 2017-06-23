@@ -148,8 +148,6 @@ class DQNAgent:
 
 
 if __name__ == "__main__":
-    # In case of CartPole-v1, you can play until 500 time step
-
     #data = dl.get_norm_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     #orig_data = dl.get_data('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_ETH&start=1435699200&end=9999999999&period=14400')
     '''
@@ -164,10 +162,6 @@ if __name__ == "__main__":
 
     scores, episodes = [], []
 
-    # Settings
-    log = False
-    verbose = 1
-
     sim = Simulator(orig_data, data)
 
     for e in range(EPISODES):
@@ -177,10 +171,6 @@ if __name__ == "__main__":
         while not sim.sim_done():
             state = sim.state # Get state
             action = agent.get_action(state)
-            if log and verbose > 1:
-                print(action)
-
-            #actions[i] = action
 
             # Simulate trading
             #-----------
@@ -194,7 +184,6 @@ if __name__ == "__main__":
 
             # every time step do the training
             lstm_layer = agent.model.layers[0]
-            #print(lstm_layer.states)
             # Store lstm states
             state_record = lstm_layer.states
             # Reset states
@@ -209,6 +198,7 @@ if __name__ == "__main__":
             state = next_state
 
             if done:
+                sim.reset()
                 break
 
         # every episode update the target model to be same with model
@@ -253,6 +243,9 @@ if __name__ == "__main__":
         #plt.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
               "  epsilon:", agent.epsilon)
+
+        # Reset the simulation
+        sim.reset()
 
         # save the model
         if e % 5 == 0:
