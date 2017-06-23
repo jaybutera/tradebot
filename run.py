@@ -1,6 +1,7 @@
 from agent import *
 import data as dl
 import numpy as np
+#from viz import Visualizer
 from sim import Simulator
 from matplotlib import pyplot as plt
 
@@ -17,31 +18,31 @@ if __name__ == "__main__":
     orig_data, data = dl.test_data_sin(250)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
-    
+
     agent = DQNAgent(state_size, action_size)
-    
+
     scores, episodes = [], []
-    
+
     sim = Simulator(orig_data, data)
-    
+    #viz = Visualizer(
+
     for e in range(EPISODES):
         score = 0
-        
-        #for i in range(len(data)):
+
         while not sim.sim_done():
             state = sim.state # Get state
             action = agent.get_action(state)
-            
+
             # Simulate trading
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
             reward, done = sim.step(max_idx, action[3])
             next_state = sim.state # Get new state
             #-----------
-            
+
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
-            
+
             # every time step do the training
             lstm_layer = agent.model.layers[0]
             # Store lstm states

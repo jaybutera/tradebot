@@ -82,6 +82,15 @@ class DQNAgent:
     def train_replay(self):
         if len(self.memory) < self.train_start:
             return
+
+        # First reset lstm states
+        lstm_layer = self.model.layers[0]
+        # Store lstm states
+        state_record = lstm_layer.states
+        # Reset states
+        self.model.layers[0].reset_states()
+        self.target_model.layers[0].reset_states()
+
         batch_size = min(self.batch_size, len(self.memory))
         #mini_batch = random.sample(self.memory, batch_size)
         # Mini batch must hold temporal information. No rand sampling
