@@ -116,22 +116,21 @@ def train_replay(agent):
         #state = state.reshape((1,1,state.size))
         next_state = np.array(next_state)
         #next_state = next_state.reshape((1,1,next_state.size))
-        prediction = agent.get_action(state)
+        prediction = agent(state)
         target = np.array(prediction, copy=True)
 
-        # like Q Learning, get maximum Q value at s'
-        # But from target model
+        # Q Learning, get maximum Q value at s'
         if done:
             target[max_idx] = reward
             target[3] = reward
         else:
             max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
             target[max_idx] = reward + agent.discount_factor * \
-                agent.target_model.predict(next_state)[0][max_idx]
+                agent(next_state)[max_idx]
 
             # Always update % to buy/sell
             target[3] = reward + agent.discount_factor * \
-                agent.target_model.predict(next_state)[0][3]
+                agent(next_state)[3]
 
         predictions[i] = prediction
         targets[i] = target
