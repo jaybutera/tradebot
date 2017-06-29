@@ -21,7 +21,6 @@ if __name__ == "__main__":
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
     agent = DQN(state_size, action_size)
-    optimizer = optim.RMSprop(agent.parameters())
 
     scores, episodes = [], []
 
@@ -32,14 +31,14 @@ if __name__ == "__main__":
         score = 0
 
         while not sim.sim_done():
-            state = sim.state # Get state
+            state = Tensor(sim.state) # Get state
             action = agent.get_action(state)
 
             # Simulate trading
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
             reward, done = sim.step(max_idx, action[3])
-            next_state = sim.state # Get new state
+            next_state = Tensor(sim.state) # Get new state
             #-----------
 
             # save the sample <s, a, r, s'> to the replay memory
@@ -54,7 +53,7 @@ if __name__ == "__main__":
                 break
 
         # every episode update the target model to be same with model
-        agent.update_target_model()
+        #agent.update_target_model()
 
         # every episode, plot the play time
         scores.append(score)
@@ -100,5 +99,5 @@ if __name__ == "__main__":
         sim.reset()
 
         # save the model
-        if e % 5 == 0:
-            agent.save_model("./save_model/agent.h5")
+        #if e % 5 == 0:
+            #agent.save_model("./save_model/agent.h5")

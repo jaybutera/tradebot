@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
+import random
 
 # if gpu is to be used
 use_cuda = torch.cuda.is_available()
@@ -39,14 +40,28 @@ class ReplayMemory(object):
         return len(self.memory)
 '''
 
+
+'''
+------------------------------------
+NN MODEL
+------------------------------------
+'''
+class NN(nn.Module):
+    def __init__(self, state_size, action_size):
+        super(NN, self).__init__()
+
+        self.linear = nn.Linear(state_size, action_size)
+
+    def forward(self, x):
+        return F.relu( self.linear(x) )
+
 '''
 ------------------------------------
 DEEP Q NETWORK
 ------------------------------------
 '''
-class DQN(nn.Module):
+class DQN():
     def __init__(self, state_size, action_size):
-        super(DQN, self).__init__()
 
         # Settings
         self.state_size = state_size
@@ -64,10 +79,8 @@ class DQN(nn.Module):
         self.memory = []
         self.position = 0
 
-        self.linear = nn.Linear(state_size, action_size)
-
-    def forward(self, x):
-        return F.relu( self.linear(x) )
+        self.model = NN(state_size, action_size)
+        self.optimizer = optim.RMSprop(self.model.parameters())
 
     def get_action(self, state):
         if np.random.rand() <= self.epsilon:
@@ -77,10 +90,14 @@ class DQN(nn.Module):
         else:
             #state = np.array(state)
             #state = state.reshape((state.size))
-            q_value = self( Variable(state, volatile=True).type(FloatTensor)).data
-            q_value[3] = 1.
+            state = state.view(1,len(state))
+            x = Variable(state, volatile=True).type(FloatTensor)
+            q_value = self.model(x)
+            #q_value = self.model( Variable(state, volatile=True)
+            #        .type(FloatTensor)).data
+            q_value[0][3] = 1.
 
-            return q_value.numpy() # Torch tensor to np array
+            return q_value.data[0].numpy() # Torch tensor to np array
 
     # save sample <s,a,r,s'> to the replay memory
     def replay_memory(self, state, action, reward, next_state, done):
@@ -95,56 +112,57 @@ class DQN(nn.Module):
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-def train_replay(agent):
-    if len(agent.memory) < agent.train_start:
-        return
+    def train_replay(self):
+        if len(self.memory) < self.train_start:
+            return
 
-    batch_size = min(agent.batchsize, len(agent.memory))
-    mini_batch = random.sample(agent.memory, batch_size)
+        batch_size = min(self.batchsize, len(self.memory))
+        mini_batch = random.sample(self.memory, batch_size)
 
-    # (batch_size, # features)
-    predictions = Variable(torch.zeros(batch_size,
-        agent.state_size).type(Tensor), volatile=True)
-    # (batch_size, # actions)
-    targets     = Variable(torch.zeros(batch_size,
-        agent.action_size).type(Tensor), volatile=True)
+        # (batch_size, # features)
+        predictions = Variable(torch.zeros(batch_size,
+            self.action_size).type(Tensor), volatile=True)
+        # (batch_size, # actions)
+        targets     = Variable(torch.zeros(batch_size,
+            self.action_size).type(Tensor), volatile=True)
 
-    # Construct training batch
-    for i in range(batch_size):
-        state, action, reward, next_state, done = mini_batch[i]
-        state = np.array(state)
-        #state = state.reshape((1,1,state.size))
-        next_state = np.array(next_state)
-        #next_state = next_state.reshape((1,1,next_state.size))
-        prediction = agent(state)
-        target = np.array(prediction, copy=True)
+        # Construct training batch
+        for i in range(batch_size):
+            state, action, reward, next_state, done = mini_batch[i]
 
-        # Q Learning, get maximum Q value at s'
-        if done:
-            target[max_idx] = reward
-            target[3] = reward
-        else:
-            max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
-            target[max_idx] = reward + agent.discount_factor * \
-                agent(next_state)[max_idx]
+            s = Variable(state).view(1,len(state))
+            ns = Variable(next_state).view(1,len(next_state))
 
-            # Always update % to buy/sell
-            target[3] = reward + agent.discount_factor * \
-                agent(next_state)[3]
+            prediction = self.model(s)[0]
+            target = prediction.clone()
 
-        predictions[i] = prediction
-        targets[i] = target
+            # Q Learning, get maximum Q value at s'
+            if done:
+                target[max_idx] = reward
+                target[3] = reward
+            else:
+                max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
+                t = self.model(ns)[0]
+                target[max_idx] = reward + self.discount_factor * \
+                                    t[max_idx].data
 
-    # Allow gradients to be computing for model fitting
-    predictions.volatile = False
-    tagets.volatile = False
+                # Always update % to buy/sell
+                target[3] = reward + self.discount_factor * t[3].data
 
-    # Compute Huber loss
-    loss = F.smooth_11_loss(predictions, targets)
+            predictions[i] = prediction
+            targets[i] = target
 
-    # Optimize the model
-    optimizer.zero_grad()
-    loss.backward()
-    #for param in model.parameters():
-    #    param.grad.data.camp_(-1,1)
-    optimizer.step()
+        # Allow gradients to be computing for model fitting
+        predictions.volatile = False
+        predictions.requires_grad = True
+        targets.volatile = False
+
+        # Compute Huber loss
+        loss = F.smooth_l1_loss(predictions, targets)
+
+        # Optimize the model
+        self.optimizer.zero_grad()
+        loss.backward()
+        #for param in model.parameters():
+        #    param.grad.data.camp_(-1,1)
+        self.optimizer.step()
