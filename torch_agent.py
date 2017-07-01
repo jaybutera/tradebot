@@ -53,7 +53,7 @@ class NN(nn.Module):
         self.linear = nn.Linear(state_size, action_size)
 
     def forward(self, x):
-        return F.relu( self.linear(x) )
+        return F.sigmoid( self.linear(x) )
 
 '''
 ------------------------------------
@@ -121,7 +121,7 @@ class DQN():
 
         # (batch_size, # features)
         predictions = Variable(torch.zeros(batch_size,
-            self.action_size).type(Tensor), volatile=True)
+            self.action_size).type(Tensor))
         # (batch_size, # actions)
         targets     = Variable(torch.zeros(batch_size,
             self.action_size).type(Tensor), volatile=True)
@@ -135,13 +135,13 @@ class DQN():
 
             prediction = self.model(s)[0]
             target = prediction.clone()
+            max_idx = np.argmax(action[:2])
 
             # Q Learning, get maximum Q value at s'
             if done:
                 target[max_idx] = reward
                 target[3] = reward
             else:
-                max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
                 t = self.model(ns)[0]
                 target[max_idx] = reward + self.discount_factor * \
                                     t[max_idx].data
@@ -153,8 +153,8 @@ class DQN():
             targets[i] = target
 
         # Allow gradients to be computing for model fitting
-        predictions.volatile = False
-        predictions.requires_grad = True
+        #predictions.volatile = False
+        #predictions.requires_grad = True
         targets.volatile = False
 
         # Compute Huber loss
@@ -163,6 +163,8 @@ class DQN():
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
-        #for param in model.parameters():
-        #    param.grad.data.camp_(-1,1)
+
+        #for param in self.model.parameters():
+        #    param.grad.data.clamp_(-1,1)
+        #print( [x.grad for x in list(self.model.parameters())] )
         self.optimizer.step()
