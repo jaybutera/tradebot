@@ -2,6 +2,7 @@ from torch_agent import *
 import data as dl
 import numpy as np
 #from viz import Visualizer
+#import viz
 from sim import Simulator
 from matplotlib import pyplot as plt
 
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     '''
-    orig_data, data = dl.test_data_sin(250)
+    orig_data, data = dl.test_data_sin(500)
     state_size = len( data[0] ) + 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     sim = Simulator(orig_data, data)
-    #viz = Visualizer(
+    #viz = Visualizer()
 
     for e in range(EPISODES):
         score = 0
@@ -60,36 +61,38 @@ if __name__ == "__main__":
         episodes.append(e)
         #plt.plot(episodes, scores, 'b')
 
+        #viz.update_graph(data, sim.assets_db, sim.usd_db, sim.crypt_db)
+
         '''
         Plot normalized data
         '''
-        if False:
-            try:
-                t = np.arange(len(data))
-                # Usd
-                u = usd_db[:len(data)]
-                plt.plot(t, np.divide(u, np.max(u)), 'b', label='usd')
-                # Crypt
-                l = crypt_db[:len(data)]
-                l = [x if x > 0. else 0. for x in l]
-                plt.plot(t, np.divide(l, np.max(l)), 'r', label='crypto')
-                # Assets
-                a = assets_db[:len(data)]
-                plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
-                # Normalized weighted avg data
-                w_avg = [x[5] for x in data]
-                plt.plot(t, w_avg, 'k', label='norm data')
-                # Display legend
-                plt.legend(loc='lower right')
+        if True:
+            #try:
+            t = np.arange(len(data))
+            # Usd
+            u = sim.usd_db[:len(data)]
+            plt.plot(t, np.divide(u, np.max(u)), 'b', label='usd')
+            # Crypt
+            l = sim.crypt_db[:len(data)]
+            l = [x if x > 0. else 0. for x in l]
+            plt.plot(t, np.divide(l, np.max(l)), 'r', label='crypto')
+            # Assets
+            a = sim.assets_db[:len(data)]
+            plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
+            # Normalized weighted avg data
+            w_avg = [x[5] for x in data]
+            plt.plot(t, w_avg, 'k', label='norm data')
+            # Display legend
+            plt.legend(loc='lower right')
 
-                plt.savefig("./save_graph/activity_e" + str(e) + ".png")
-                if log:
-                    plt.show()
+            plt.savefig("./save_graph/activity_e" + str(e) + ".png")
+            #if log:
+            #    plt.show()
 
-                # Clear plot
-                plt.clf()
-            except:
-                print(e)
+            # Clear plot
+            plt.clf()
+            #except:
+            #    print(e)
 
         #plt.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
