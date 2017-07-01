@@ -56,8 +56,8 @@ class Simulator(object):
                 print('buying ' , c , ' crypto with ' , u , \
                         'usd [own:', self.usd, 'usd | ', self.crypt, ' crypt')
             self.action_log.write('buying ' + str(c) + ' crypto with ' + str(u) + \
-                    'usd [own:'+ str(self.usd) + 'usd | '+ str(self.crypt) + ' crypt' \
-                    + ' T: ' + str(self.t) + '\n')
+                    'usd [own:'+ str(self.usd) + 'usd | '+ str(self.crypt) + 'crypt]' \
+                    + ' T: ' + str(self.t))
         elif move == 1: # Sell crypt
             c = self.crypt * perc
             u = self.orig_data[self.t][5] * c
@@ -67,8 +67,8 @@ class Simulator(object):
                 print('selling ' , c , ' crypto for ' , u , \
                       'usd [own:', self.usd, 'usd | ', self.crypt, ' crypt')
             self.action_log.write('selling ' + str(c) + ' crypto for ' + str(u) + \
-                  'usd [own:' + str(self.usd) + 'usd | ' + str(self.crypt) + ' crypt' \
-                  + ' T: ' + str(self.t) + '\n')
+                  'usd [own:' + str(self.usd) + 'usd | ' + str(self.crypt) + 'crypt]' \
+                  + ' T: ' + str(self.t))
         else: # Hold
             if self.log and self.verbose > 1:
                 print('holding')
@@ -90,6 +90,10 @@ class Simulator(object):
         # Reward is % change of assets
         reward = new_assets / self.assets - 1
         reward = reward if not done else -10 # Punish if all assets are lost
+
+        # Log reward
+        if move < 2:
+            self.action_log.write(' R: ' + str(reward) + '\n')
 
         # Update assets
         self.assets = new_assets
