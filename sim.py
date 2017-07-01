@@ -4,10 +4,14 @@ class Simulator(object):
     def __init__ (self, orig_data, data, usd=1000., crypt=0.):
         self.data = data
         self.orig_data = orig_data
+        self.episode = -1
 
         self.reset()
 
+        # Start first log file
+
     def reset (self, usd=1000., crypt=0.):
+        self.episode += 1
         self.usd = usd
         self.crypt = crypt
 
@@ -26,6 +30,9 @@ class Simulator(object):
         # Settings
         self.log = True
         self.verbose = 1
+
+        # Log actions
+        self.action_log = open('./action_logs/record_book_' + str(self.episode) + '.txt', 'w+')
 
     def step (self, move, perc):
         '''
@@ -48,6 +55,9 @@ class Simulator(object):
             if self.log and self.verbose > 1:
                 print('buying ' , c , ' crypto with ' , u , \
                         'usd [own:', self.usd, 'usd | ', self.crypt, ' crypt')
+            self.action_log.write('buying ' + str(c) + ' crypto with ' + str(u) + \
+                    'usd [own:'+ str(self.usd) + 'usd | '+ str(self.crypt) + ' crypt' \
+                    + ' T: ' + str(self.t) + '\n')
         elif move == 1: # Sell crypt
             c = self.crypt * perc
             u = self.orig_data[self.t][5] * c
@@ -56,6 +66,9 @@ class Simulator(object):
             if self.log and self.verbose > 1:
                 print('selling ' , c , ' crypto for ' , u , \
                       'usd [own:', self.usd, 'usd | ', self.crypt, ' crypt')
+            self.action_log.write('selling ' + str(c) + ' crypto for ' + str(u) + \
+                  'usd [own:' + str(self.usd) + 'usd | ' + str(self.crypt) + ' crypt' \
+                  + ' T: ' + str(self.t) + '\n')
         else: # Hold
             if self.log and self.verbose > 1:
                 print('holding')
@@ -90,4 +103,9 @@ class Simulator(object):
         return reward, done
 
     def sim_done(self):
-        return self.t == len(self.data)
+        if self.t == len(self.data):
+            self.action_log.close()
+            return True
+        else:
+            return False
+

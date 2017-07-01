@@ -1,8 +1,6 @@
 from torch_agent import *
 import data as dl
 import numpy as np
-#from viz import Visualizer
-#import viz
 from sim import Simulator
 from matplotlib import pyplot as plt
 
@@ -26,9 +24,9 @@ if __name__ == "__main__":
     scores, episodes = [], []
 
     sim = Simulator(orig_data, data)
-    #viz = Visualizer()
 
     for e in range(EPISODES):
+        # Write actions to log file
         score = 0
 
         while not sim.sim_done():
@@ -50,6 +48,7 @@ if __name__ == "__main__":
             score += reward
 
             if done:
+                print('done!')
                 sim.reset()
                 break
 
@@ -61,7 +60,6 @@ if __name__ == "__main__":
         episodes.append(e)
         #plt.plot(episodes, scores, 'b')
 
-        #viz.update_graph(data, sim.assets_db, sim.usd_db, sim.crypt_db)
 
         '''
         Plot normalized data
