@@ -16,7 +16,7 @@ class Simulator(object):
         self.crypt = crypt
 
         # Initial state
-        self.state = self.data[0] + [self.usd, self.crypt]
+        self.state = self.data[0] + [self.usd/10000, self.crypt/10000]
         # Total worth is usd + weightedAvg of crypt amount
         self.assets = self.usd + self.orig_data[0][5] * self.crypt
         # Time tracker
@@ -26,6 +26,7 @@ class Simulator(object):
         self.usd_db = np.empty( len(self.data) )
         self.crypt_db = np.empty( len(self.data) )
         self.assets_db = np.empty( len(self.data) )
+        self.reward_db = np.empty( len(self.data) )
 
         # Settings
         self.log = True
@@ -72,13 +73,13 @@ class Simulator(object):
         else: # Hold
             if self.log and self.verbose > 1:
                 print('holding')
+            #self.action_log.write('holding ' + ' T: ' + str(self.t))
         # ----------------
 
 
         # Store info
         self.usd_db[self.t] = self.usd
         self.crypt_db[self.t] = self.crypt
-        self.assets_db[self.t] = self.assets
 
         # Edge cases
         done = True if self.usd < 0.5 and self.crypt < 0.5 else False
@@ -90,6 +91,7 @@ class Simulator(object):
         # Reward is % change of assets
         reward = new_assets / self.assets - 1
         reward = reward if not done else -10 # Punish if all assets are lost
+        self.reward_db[self.t] = reward
 
         # Log reward
         if move < 2:
@@ -97,9 +99,10 @@ class Simulator(object):
 
         # Update assets
         self.assets = new_assets
+        self.assets_db[self.t] = self.assets
 
         # Update state
-        self.state = self.data[self.t] + [self.usd, self.crypt]
+        self.state = self.data[self.t] + [self.usd/10000, self.crypt/10000]
 
         # Update time
         self.t += 1

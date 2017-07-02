@@ -37,6 +37,12 @@ if __name__ == "__main__":
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
             reward, done = sim.step(max_idx, action[3])
+            '''
+            if sim.t == 0:
+                reward, done = sim.step(0, 1.)
+            else:
+                reward, done = sim.step(2, 1.)
+            '''
             next_state = Tensor(sim.state) # Get new state
             #-----------
 
@@ -77,6 +83,9 @@ if __name__ == "__main__":
             # Assets
             a = sim.assets_db[:len(data)]
             plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
+            # Rewards
+            r = sim.reward_db[:len(data)]
+            plt.plot(t, r, '.', label='rewards')
             # Normalized weighted avg data
             w_avg = [x[5] for x in data]
             plt.plot(t, w_avg, 'k', label='norm data')
