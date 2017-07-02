@@ -83,9 +83,6 @@ if __name__ == "__main__":
             # Assets
             a = sim.assets_db[:len(data)]
             plt.plot(t, np.divide(a, np.max(a)), 'g', label='assets')
-            # Rewards
-            r = sim.reward_db[:len(data)]
-            plt.plot(t, r, '.', label='rewards')
             # Normalized weighted avg data
             w_avg = [x[5] for x in data]
             plt.plot(t, w_avg, 'k', label='norm data')
