@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 300
+EPISODES = 20
 
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     agent = DQN(state_size, action_size)
 
-    scores, episodes = [], []
+    losses, scores, episodes = [], [], []
 
     sim = Simulator(orig_data, data)
 
@@ -51,7 +51,8 @@ if __name__ == "__main__":
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
 
-            agent.train_replay()
+            loss = agent.train_replay()
+            losses.append(loss.data.numpy()[0])
 
             score += reward
 
@@ -110,3 +111,6 @@ if __name__ == "__main__":
         # save the model
         #if e % 5 == 0:
             #agent.save_model("./save_model/agent.h5")
+    plt.plot(losses)
+    plt.savefig('./loss.png')
+    plt.show()

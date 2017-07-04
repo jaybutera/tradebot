@@ -58,7 +58,8 @@ class DQN():
         self.position = 0
 
         self.model = NN(state_size, action_size)
-        self.optimizer = optim.RMSprop(self.model.parameters())
+        self.optimizer = optim.RMSprop(self.model.parameters()
+                , lr=self.learning_rate)
 
     def get_action(self, state):
         if np.random.rand() <= self.epsilon:
@@ -92,7 +93,7 @@ class DQN():
 
     def train_replay(self):
         if len(self.memory) < self.train_start:
-            return
+            return Variable(Tensor([0.]))
 
         batch_size = min(self.batchsize, len(self.memory))
         mini_batch = random.sample(self.memory, batch_size)
@@ -149,3 +150,5 @@ class DQN():
         #    param.grad.data.clamp_(-1,1)
         #print( [x.grad for x in list(self.model.parameters())] )
         self.optimizer.step()
+
+        return loss
