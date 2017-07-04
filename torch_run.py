@@ -37,12 +37,14 @@ if __name__ == "__main__":
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
             reward, done = sim.step(max_idx, action[3])
+
             '''
             if sim.t == 0:
                 reward, done = sim.step(0, 1.)
             else:
                 reward, done = sim.step(2, 1.)
             '''
+
             next_state = Tensor(sim.state) # Get new state
             #-----------
 

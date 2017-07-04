@@ -17,32 +17,6 @@ Tensor = FloatTensor
 
 '''
 ------------------------------------
-REPLAY MEMORY
-------------------------------------
-class ReplayMemory(object):
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
-
-    def push(self, *args):
-        """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-'''
-
-
-'''
-------------------------------------
 NN MODEL
 ------------------------------------
 '''
@@ -50,10 +24,14 @@ class NN(nn.Module):
     def __init__(self, state_size, action_size):
         super(NN, self).__init__()
 
-        self.linear = nn.Linear(state_size, action_size)
+        self.linear = nn.Linear(state_size, 20)
+        self.linear1 = nn.Linear(20, 40)
+        self.linear2 = nn.Linear(40, action_size)
 
     def forward(self, x):
-        return F.sigmoid( self.linear(x) )
+        x = F.relu( self.linear(x) )
+        x = F.relu( self.linear1(x) )
+        return F.sigmoid( self.linear2(x) )
 
 '''
 ------------------------------------
@@ -68,7 +46,7 @@ class DQN():
         self.action_size = action_size
         self.batchsize = 32
         self.discount_factor = 0.99
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         self.epsilon = 1.0
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
@@ -158,7 +136,10 @@ class DQN():
         targets.volatile = False
 
         # Compute Huber loss
+        #print('pred', predictions)
+        #print('targ', targets)
         loss = F.smooth_l1_loss(predictions, targets)
+        #print('loss', loss.data)
 
         # Optimize the model
         self.optimizer.zero_grad()
