@@ -16,7 +16,7 @@ class Simulator(object):
         self.crypt = crypt
 
         # Initial state
-        self.state = self.data[0] + [self.usd/10000, self.crypt/10000]
+        self.state = self.data[0] #+ [self.usd/10000, self.crypt/10000]
         # Total worth is usd + weightedAvg of crypt amount
         self.assets = self.usd + self.orig_data[0][5] * self.crypt
         # Time tracker
@@ -89,7 +89,7 @@ class Simulator(object):
         new_assets = self.usd + self.orig_data[self.t][5] * self.crypt
 
         # Reward is % change of assets
-        reward = new_assets / self.assets - 1
+        reward = (new_assets / self.assets - 1) * 10
         reward = reward if not done else -10 # Punish if all assets are lost
         self.reward_db[self.t] = reward
 
@@ -102,7 +102,7 @@ class Simulator(object):
         self.assets_db[self.t] = self.assets
 
         # Update state
-        self.state = self.data[self.t] + [self.usd/10000, self.crypt/10000]
+        self.state = self.data[self.t] #+ [self.usd/10000, self.crypt/10000]
 
         # Update time
         self.t += 1

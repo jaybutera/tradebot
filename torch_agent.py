@@ -24,13 +24,15 @@ class NN(nn.Module):
     def __init__(self, state_size, action_size):
         super(NN, self).__init__()
 
-        self.linear = nn.Linear(state_size, 20)
-        self.linear1 = nn.Linear(20, 40)
-        self.linear2 = nn.Linear(40, action_size)
+        self.linear = nn.Linear(state_size, 10)
+        self.linear1 = nn.Linear(10, 15)
+        self.lstm = nn.LSTM(15, 15)
+        self.linear2 = nn.Linear(15, action_size)
 
     def forward(self, x):
         x = F.relu( self.linear(x) )
         x = F.relu( self.linear1(x) )
+        x = F.relu( self.lstm(x) )
         return F.sigmoid( self.linear2(x) )
 
 '''
@@ -57,7 +59,10 @@ class DQN():
         self.memory = []
         self.position = 0
 
+        # Neural nets
         self.model = NN(state_size, action_size)
+        self.target_model = NN(state_size, action_size)
+
         self.optimizer = optim.RMSprop(self.model.parameters()
                 , lr=self.learning_rate)
 
@@ -77,6 +82,9 @@ class DQN():
             q_value[0][3] = 1.
 
             return q_value.data[0].numpy() # Torch tensor to np array
+
+    def update_target_model(self):
+        self.target_model.load_state_dict(self.model.state_dict())
 
     # save sample <s,a,r,s'> to the replay memory
     def replay_memory(self, state, action, reward, next_state, done):
@@ -99,6 +107,8 @@ class DQN():
         mini_batch = random.sample(self.memory, batch_size)
 
         # (batch_size, # features)
+        states = Variable(torch.zeros(batch_size,
+            self.state_size).type(Tensor))
         predictions = Variable(torch.zeros(batch_size,
             self.action_size).type(Tensor))
         # (batch_size, # actions)
@@ -110,6 +120,8 @@ class DQN():
             state, action, reward, next_state, done = mini_batch[i]
 
             s = Variable(state).view(1,len(state))
+            si = Variable(state).view(len(state))
+            states[i] = si
             ns = Variable(next_state).view(1,len(next_state))
 
             prediction = self.model(s)[0]
@@ -121,7 +133,7 @@ class DQN():
                 target[max_idx] = reward
                 target[3] = reward
             else:
-                t = self.model(ns)[0]
+                t = self.target_model(ns)[0]
                 target[max_idx] = reward + self.discount_factor * \
                                     t[max_idx].data
 
@@ -139,6 +151,11 @@ class DQN():
         # Compute Huber loss
         #print('pred', predictions)
         #print('targ', targets)
+        '''
+        out = self.model(states)
+        l = torch.nn.MSELoss()
+        loss = l(out, targets)
+        '''
         loss = F.smooth_l1_loss(predictions, targets)
         #print('loss', loss.data)
 
