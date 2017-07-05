@@ -72,13 +72,9 @@ class DQN():
             q_value[3] = 1.
             return q_value
         else:
-            #state = np.array(state)
-            #state = state.reshape((state.size))
             state = state.view(1,len(state))
             x = Variable(state, volatile=True).type(FloatTensor)
             q_value = self.model(x)
-            #q_value = self.model( Variable(state, volatile=True)
-            #        .type(FloatTensor)).data
             q_value[0][3] = 1.
 
             return q_value.data[0].numpy() # Torch tensor to np array
@@ -147,20 +143,15 @@ class DQN():
             targets[i] = target
 
         # Allow gradients to be computing for model fitting
-        #predictions.volatile = False
-        #predictions.requires_grad = True
         targets.volatile = False
 
         # Compute Huber loss
-        #print('pred', predictions)
-        #print('targ', targets)
         '''
         out = self.model(states)
         l = torch.nn.MSELoss()
         loss = l(out, targets)
         '''
         loss = F.smooth_l1_loss(predictions, targets)
-        #print('loss', loss.data)
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -168,7 +159,6 @@ class DQN():
 
         #for param in self.model.parameters():
         #    param.grad.data.clamp_(-1,1)
-        #print( [x.grad for x in list(self.model.parameters())] )
         self.optimizer.step()
 
         self.save_model()

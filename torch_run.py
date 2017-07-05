@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 40
+EPISODES = 20
 
 
 if __name__ == "__main__":
@@ -39,13 +39,6 @@ if __name__ == "__main__":
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
             reward, done = sim.step(max_idx, action[3])
 
-            '''
-            if sim.t == 0:
-                reward, done = sim.step(0, 1.)
-            else:
-                reward, done = sim.step(2, 1.)
-            '''
-
             next_state = Tensor(sim.state) # Get new state
             #-----------
 
@@ -63,19 +56,17 @@ if __name__ == "__main__":
                 break
 
         # every episode update the target model to be same with model
-        #agent.update_target_model()
+        agent.update_target_model()
 
         # every episode, plot the play time
         scores.append(score)
         episodes.append(e)
-        #plt.plot(episodes, scores, 'b')
 
 
         '''
         Plot normalized data
         '''
         if True:
-            #try:
             t = np.arange(len(data))
             # Usd
             u = sim.usd_db[:len(data)]
@@ -94,26 +85,16 @@ if __name__ == "__main__":
             plt.legend(loc='lower right')
 
             plt.savefig("./save_graph/activity_e" + str(e) + ".png")
-            #if log:
-            #    plt.show()
 
             # Clear plot
             plt.clf()
-            #except:
-            #    print(e)
 
-        #plt.savefig("./save_graph/Cartpole_DQN.png")
         print("episode:", e, "  score:", score, "  memory length:", len(agent.memory),
           "  epsilon:", agent.epsilon)
 
         # Reset the simulation
         sim.reset()
 
-        agent.update_target_model()
-
-        # save the model
-        #if e % 5 == 0:
-            #agent.save_model("./save_model/agent.h5")
     plt.plot(scores)
     plt.savefig('./loss.png')
     plt.show()
