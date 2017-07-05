@@ -19,6 +19,7 @@ if __name__ == "__main__":
     state_size = len( data[0] ) #+ 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
+    load_agent = True
     agent = DQN(state_size, action_size)
 
     losses, scores, episodes = [], [], []
@@ -113,6 +114,6 @@ if __name__ == "__main__":
         # save the model
         #if e % 5 == 0:
             #agent.save_model("./save_model/agent.h5")
-    plt.plot(losses)
+    plt.plot(scores)
     plt.savefig('./loss.png')
     plt.show()

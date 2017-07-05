@@ -26,13 +26,13 @@ class NN(nn.Module):
 
         self.linear = nn.Linear(state_size, 10)
         self.linear1 = nn.Linear(10, 15)
-        self.lstm = nn.LSTM(15, 15)
+        #self.lstm = nn.LSTM(15, 15)
         self.linear2 = nn.Linear(15, action_size)
 
     def forward(self, x):
         x = F.relu( self.linear(x) )
         x = F.relu( self.linear1(x) )
-        x = F.relu( self.lstm(x) )
+        #x = F.relu( self.lstm(x) )
         return F.sigmoid( self.linear2(x) )
 
 '''
@@ -98,6 +98,9 @@ class DQN():
         # Decay epsilon
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+
+    def save_model(self):
+        torch.save(self.model.state_dict(), './save_model/dqn_agent.pt')
 
     def train_replay(self):
         if len(self.memory) < self.train_start:
@@ -167,5 +170,7 @@ class DQN():
         #    param.grad.data.clamp_(-1,1)
         #print( [x.grad for x in list(self.model.parameters())] )
         self.optimizer.step()
+
+        self.save_model()
 
         return loss
