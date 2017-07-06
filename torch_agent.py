@@ -24,16 +24,18 @@ class NN(nn.Module):
     def __init__(self, state_size, action_size):
         super(NN, self).__init__()
 
-        self.linear = nn.Linear(state_size, 10)
-        self.linear1 = nn.Linear(10, 8)
+        self.linear = nn.Linear(state_size, 50)
+        self.linear1 = nn.Linear(50, 30)
+        self.linear2 = nn.Linear(30, 50)
         #self.lstm = nn.LSTM(15, 15)
-        self.linear2 = nn.Linear(8, action_size)
+        self.linear3 = nn.Linear(50, action_size)
 
     def forward(self, x):
         x = F.relu( self.linear(x) )
         x = F.relu( self.linear1(x) )
+        x = F.relu( self.linear2(x) )
         #x = F.relu( self.lstm(x) )
-        return F.sigmoid( self.linear2(x) )
+        return F.sigmoid( self.linear3(x) )
 
 '''
 ------------------------------------
@@ -48,7 +50,7 @@ class DQN():
         self.action_size = action_size
         self.batchsize = 32
         self.discount_factor = 0.99
-        self.learning_rate = 0.01
+        self.learning_rate = 0.005
         self.epsilon = 1.0
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
@@ -63,7 +65,7 @@ class DQN():
         self.model = NN(state_size, action_size)
         self.target_model = NN(state_size, action_size)
 
-        self.optimizer = optim.RMSprop(self.model.parameters()
+        self.optimizer = optim.Adam(self.model.parameters()
                 , lr=self.learning_rate)
 
     def get_action(self, state):
