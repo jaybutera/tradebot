@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 20
+EPISODES = 60
 
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     state_size = len( data[0] ) #+ 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
 
-    load_agent = True
+    #load_agent = False
     agent = DQN(state_size, action_size)
 
     losses, scores, episodes = [], [], []
@@ -45,8 +45,8 @@ if __name__ == "__main__":
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
 
-            loss = agent.train_replay()
-            losses.append(loss.data.numpy()[0])
+            #loss = agent.train_replay()
+            #losses.append(loss.data.numpy()[0])
 
             score += reward
 
@@ -55,8 +55,10 @@ if __name__ == "__main__":
                 sim.reset()
                 break
 
+        loss = agent.train_replay()
         # every episode update the target model to be same with model
-        agent.update_target_model()
+        if e % 3 == 0:
+            agent.update_target_model()
 
         # every episode, plot the play time
         scores.append(score)

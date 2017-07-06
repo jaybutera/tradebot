@@ -25,9 +25,9 @@ class NN(nn.Module):
         super(NN, self).__init__()
 
         self.linear = nn.Linear(state_size, 10)
-        self.linear1 = nn.Linear(10, 15)
+        self.linear1 = nn.Linear(10, 8)
         #self.lstm = nn.LSTM(15, 15)
-        self.linear2 = nn.Linear(15, action_size)
+        self.linear2 = nn.Linear(8, action_size)
 
     def forward(self, x):
         x = F.relu( self.linear(x) )
@@ -106,8 +106,8 @@ class DQN():
         mini_batch = random.sample(self.memory, batch_size)
 
         # (batch_size, # features)
-        states = Variable(torch.zeros(batch_size,
-            self.state_size).type(Tensor))
+        #states = Variable(torch.zeros(batch_size,
+        #    self.state_size).type(Tensor))
         predictions = Variable(torch.zeros(batch_size,
             self.action_size).type(Tensor))
         # (batch_size, # actions)
@@ -119,8 +119,8 @@ class DQN():
             state, action, reward, next_state, done = mini_batch[i]
 
             s = Variable(state).view(1,len(state))
-            si = Variable(state).view(len(state))
-            states[i] = si
+            #si = Variable(state).view(len(state))
+            #states[i] = si
             ns = Variable(next_state).view(1,len(next_state))
 
             prediction = self.model(s)[0]
