@@ -6,8 +6,6 @@ class Simulator(object):
         self.orig_data = orig_data
         self.episode = -1
 
-        self.reset()
-
         # Start first log file
 
     def reset (self, usd=1000., crypt=0.):
@@ -16,11 +14,11 @@ class Simulator(object):
         self.crypt = crypt
 
         # Initial state
-        self.state = self.data[0] #+ [self.usd/10000, self.crypt/10000]
+        state = self.data[0] #+ [self.usd/10000, self.crypt/10000]
         # Total worth is usd + weightedAvg of crypt amount
         self.assets = self.usd + self.orig_data[0][5] * self.crypt
         # Time tracker
-        self.t = 0
+        self.t = 1
 
         # Storage
         self.usd_db = np.empty( len(self.data) )
@@ -34,6 +32,8 @@ class Simulator(object):
 
         # Log actions
         self.action_log = open('./action_logs/record_book_' + str(self.episode) + '.txt', 'w+')
+
+        return state
 
     def step (self, move, perc):
         '''
@@ -102,12 +102,12 @@ class Simulator(object):
         self.assets_db[self.t] = self.assets
 
         # Update state
-        self.state = self.data[self.t] #+ [self.usd/10000, self.crypt/10000]
+        state = self.data[self.t] #+ [self.usd/10000, self.crypt/10000]
 
         # Update time
         self.t += 1
 
-        return reward, done
+        return state, reward, done
 
     def sim_done(self):
         if self.t == len(self.data):

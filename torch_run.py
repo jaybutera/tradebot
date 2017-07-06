@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 60
+EPISODES = 500
 
 
 if __name__ == "__main__":
@@ -29,21 +29,22 @@ if __name__ == "__main__":
     for e in range(EPISODES):
         # Write actions to log file
         score = 0
+        state = Tensor( sim.reset() )
 
         while not sim.sim_done():
-            state = Tensor(sim.state) # Get state
+            #state = Tensor(sim.state) # Get state
             action = agent.get_action(state)
 
             # Simulate trading
             #-----------
             max_idx = np.argmax(action[:3]) # Choose buy/sell/hold
-            reward, done = sim.step(max_idx, action[3])
-
-            next_state = Tensor(sim.state) # Get new state
+            next_state, reward, done = sim.step(max_idx, action[3])
+            next_state = Tensor(next_state)
             #-----------
 
             # save the sample <s, a, r, s'> to the replay memory
             agent.replay_memory(state, action, reward, next_state, done)
+            state = next_state.clone()
 
             #loss = agent.train_replay()
             #losses.append(loss.data.numpy()[0])
