@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 500
+EPISODES = 200
 
 
 if __name__ == "__main__":
@@ -18,13 +18,14 @@ if __name__ == "__main__":
     orig_data, data = dl.test_data_sin(500)
     state_size = len( data[0] ) #+ 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
+    windowsize = 10
 
     #load_agent = False
-    agent = DQN(state_size, action_size)
+    agent = DQN(windowsize, state_size, action_size)
 
     losses, scores, episodes = [], [], []
 
-    sim = Simulator(orig_data, data)
+    sim = Simulator(orig_data, data, windowsize=windowsize)
 
     for e in range(EPISODES):
         # Write actions to log file

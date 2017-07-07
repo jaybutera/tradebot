@@ -21,19 +21,25 @@ NN MODEL
 ------------------------------------
 '''
 class NN(nn.Module):
-    def __init__(self, state_size, action_size):
+    def __init__(self, windowsize, state_size, action_size):
         super(NN, self).__init__()
 
-        self.linear = nn.Linear(state_size, 50)
-        self.linear1 = nn.Linear(50, 30)
-        self.linear2 = nn.Linear(30, 50)
+        #self.linear = nn.Linear(windowsize, 50)
+        self.conv1 = nn.Conv1d(1, 10, 3, stride=1)
+        self.conv2 = nn.Conv1d(10, 20, 3, stride=1)
+        #self.linear1 = nn.Linear(8, 30)
+        self.linear2 = nn.Linear(120, 30)
         #self.lstm = nn.LSTM(15, 15)
-        self.linear3 = nn.Linear(50, action_size)
+        self.linear3 = nn.Linear(30, action_size)
 
     def forward(self, x):
-        x = F.relu( self.linear(x) )
-        x = F.relu( self.linear1(x) )
+        x = F.relu( self.conv1(x) )
+        x = F.relu( self.conv2(x) )
+        x = x.view(-1, 120)
         x = F.relu( self.linear2(x) )
+        #x = F.relu( self.linear(x) )
+        #x = F.relu( self.linear1(x) )
+        #x = F.relu( self.linear2(x) )
         #x = F.relu( self.lstm(x) )
         return F.sigmoid( self.linear3(x) )
 
@@ -43,7 +49,7 @@ DEEP Q NETWORK
 ------------------------------------
 '''
 class DQN():
-    def __init__(self, state_size, action_size):
+    def __init__(self, windowsize, state_size, action_size):
 
         # Settings
         self.state_size = state_size
@@ -62,8 +68,8 @@ class DQN():
         self.position = 0
 
         # Neural nets
-        self.model = NN(state_size, action_size)
-        self.target_model = NN(state_size, action_size)
+        self.model = NN(windowsize, state_size, action_size)
+        self.target_model = NN(windowsize, state_size, action_size)
 
         self.optimizer = optim.Adam(self.model.parameters()
                 , lr=self.learning_rate)
@@ -74,7 +80,7 @@ class DQN():
             q_value[3] = 1.
             return q_value
         else:
-            state = state.view(1,len(state))
+            state = state.view(1,1,len(state))
             x = Variable(state, volatile=True).type(FloatTensor)
             q_value = self.model(x)
             q_value[0][3] = 1.
@@ -120,10 +126,10 @@ class DQN():
         for i in range(batch_size):
             state, action, reward, next_state, done = mini_batch[i]
 
-            s = Variable(state).view(1,len(state))
+            s = Variable(state).view(1,1,len(state))
             #si = Variable(state).view(len(state))
             #states[i] = si
-            ns = Variable(next_state).view(1,len(next_state))
+            ns = Variable(next_state).view(1,1,len(next_state))
 
             prediction = self.model(s)[0]
             target = prediction.clone()
