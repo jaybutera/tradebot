@@ -24,24 +24,28 @@ class NN(nn.Module):
     def __init__(self, windowsize, state_size, action_size):
         super(NN, self).__init__()
 
+        '''
         #self.linear = nn.Linear(windowsize, 50)
         self.conv1 = nn.Conv1d(1, 10, 3, stride=1)
-        self.conv2 = nn.Conv1d(10, 20, 3, stride=1)
+        self.conv2 = nn.Conv1d(10, 20, 3, stride=2)
         #self.linear1 = nn.Linear(8, 30)
-        self.linear2 = nn.Linear(120, 30)
+        self.linear2 = nn.Linear(60, 30)
         #self.lstm = nn.LSTM(15, 15)
-        self.linear3 = nn.Linear(30, action_size)
+        '''
+        self.linear3 = nn.Linear(windowsize, action_size)
 
     def forward(self, x):
+        '''
         x = F.relu( self.conv1(x) )
         x = F.relu( self.conv2(x) )
-        x = x.view(-1, 120)
+        x = x.view(-1, 60)
         x = F.relu( self.linear2(x) )
+        '''
         #x = F.relu( self.linear(x) )
         #x = F.relu( self.linear1(x) )
         #x = F.relu( self.linear2(x) )
         #x = F.relu( self.lstm(x) )
-        return F.sigmoid( self.linear3(x) )
+        return F.relu( self.linear3(x) )
 
 '''
 ------------------------------------
@@ -64,7 +68,8 @@ class DQN():
 
         # Replay memory
         self.capacity = 2000
-        self.memory = []
+        self.memory = np.array([], dtype=object)
+                #dtype=(list,list,float,list,bool))
         self.position = 0
 
         # Neural nets
@@ -82,7 +87,7 @@ class DQN():
         else:
             state = state.view(1,1,len(state))
             x = Variable(state, volatile=True).type(FloatTensor)
-            q_value = self.model(x)
+            q_value = self.model(x[0])
             q_value[0][3] = 1.
 
             return q_value.data[0].numpy() # Torch tensor to np array
@@ -93,8 +98,8 @@ class DQN():
     # save sample <s,a,r,s'> to the replay memory
     def replay_memory(self, state, action, reward, next_state, done):
         """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
+        if self.memory.size <= self.position:
+            self.memory = np.append(self.memory, [0.])
 
         self.memory[self.position] = (state, action, reward, next_state, done)
         self.position = (self.position + 1) % self.capacity
@@ -103,15 +108,21 @@ class DQN():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def save_model(self):
+    def save_state(self):
         torch.save(self.model.state_dict(), './save_model/dqn_agent.pt')
+        #self.memory.tofile('./save_model/replay_mem', sep=',')
+
+    def load_state(self):
+        self.model.load_state_dict(torch.load('./save_model/dqn_agent.pt'))
+        #self.memory = np.loadtxt('./save_model/replay_mem')
+        #self.epsilon = .001
 
     def train_replay(self):
         if len(self.memory) < self.train_start:
             return Variable(Tensor([0.]))
 
         batch_size = min(self.batchsize, len(self.memory))
-        mini_batch = random.sample(self.memory, batch_size)
+        mini_batch = np.random.choice(self.memory, batch_size)
 
         # (batch_size, # features)
         #states = Variable(torch.zeros(batch_size,
@@ -131,21 +142,21 @@ class DQN():
             #states[i] = si
             ns = Variable(next_state).view(1,1,len(next_state))
 
-            prediction = self.model(s)[0]
+            prediction = self.model(s[0])[0]
             target = prediction.clone()
             max_idx = np.argmax(action[:2])
 
             # Q Learning, get maximum Q value at s'
             if done:
                 target[max_idx] = reward
-                target[3] = reward
+                #target[3] = reward
             else:
-                t = self.target_model(ns)[0]
+                t = self.target_model(ns[0])[0]
                 target[max_idx] = reward + self.discount_factor * \
                                     t[max_idx].data
 
                 # Always update % to buy/sell
-                target[3] = reward + self.discount_factor * t[3].data
+                #target[3] = reward + self.discount_factor * t[3].data
 
             predictions[i] = prediction
             targets[i] = target
@@ -168,7 +179,5 @@ class DQN():
         #for param in self.model.parameters():
         #    param.grad.data.clamp_(-1,1)
         self.optimizer.step()
-
-        self.save_model()
 
         return loss

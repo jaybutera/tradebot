@@ -15,13 +15,14 @@ if __name__ == "__main__":
     data = dl.get_norm_data('btc_eth_lowtrend.npy')[1000:2000]
     orig_data = dl.get_data('btc_eth_lowtrend.npy')[1000:2000]
     '''
-    orig_data, data = dl.test_data_sin(500)
+    orig_data, data = dl.test_data_lin(500)
     state_size = len( data[0] ) #+ 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
     windowsize = 10
 
     #load_agent = False
     agent = DQN(windowsize, state_size, action_size)
+    agent.load_state()
 
     losses, scores, episodes = [], [], []
 
@@ -61,6 +62,7 @@ if __name__ == "__main__":
         # every episode update the target model to be same with model
         if e % 3 == 0:
             agent.update_target_model()
+            agent.save_state()
 
         # every episode, plot the play time
         scores.append(score)
