@@ -14,7 +14,8 @@ def test_data_sin (size):
 
 def test_data_lin (size):
     lin = np.arange(size)
-    norm_lin = [x/size for x in lin]
+    m = max(lin)
+    norm_lin = [x/m for x in lin]
     volume = np.ones(size)
 
     data = [[l,l,l,l,v,l] for l,v in zip(lin, volume)]
