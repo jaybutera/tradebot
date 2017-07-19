@@ -110,11 +110,11 @@ class DQNAgent:
 
             # like Q Learning, get maximum Q value at s'
             # But from target model
+            max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
             if done:
                 target[max_idx] = reward
                 target[3] = reward
             else:
-                max_idx = np.argmax(action[:2]) # Choose buy/sell/hold
                 target[max_idx] = reward + self.discount_factor * \
                     self.target_model.predict(next_state)[0][max_idx]
 

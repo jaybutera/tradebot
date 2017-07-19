@@ -5,7 +5,7 @@ from sim import Simulator
 from matplotlib import pyplot as plt
 
 
-EPISODES = 200
+EPISODES = 100
 
 
 if __name__ == "__main__":
@@ -18,11 +18,18 @@ if __name__ == "__main__":
     orig_data, data = dl.test_data_sin(1500)
     state_size = len( data[0] ) #+ 2 # last 2 are current assets (usd, crypt)
     action_size = 4 # [Buy, Sell, Hold, % to buy/sell]
-    windowsize = 10
+    windowsize = 20
 
     #load_agent = False
     agent = DQN(windowsize, state_size, action_size)
-    #agent.load_state()
+    '''
+    agent.load_state()
+    perturb = torch.from_numpy(np.random.rand(10,10) / 1)
+    agent.model.state_dict()['linear2.weight'] += perturb.float()
+    perturb2 = torch.from_numpy(np.random.rand(4,10) / 1)
+    agent.model.state_dict()['linear3.weight'] += perturb2.float()
+    print(agent.model.state_dict())
+    '''
 
     losses, scores, episodes = [], [], []
 
@@ -61,8 +68,10 @@ if __name__ == "__main__":
         loss = agent.train_replay()
         # every episode update the target model to be same with model
         agent.update_target_model()
+        '''
         if e % 5 == 0:
             agent.save_state()
+        '''
 
         # every episode, plot the play time
         scores.append(score)

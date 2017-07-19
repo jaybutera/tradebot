@@ -6,6 +6,7 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 import random
+import neuralnets
 
 # if gpu is to be used
 use_cuda = torch.cuda.is_available()
@@ -14,51 +15,20 @@ LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 Tensor = FloatTensor
 
-
-'''
-------------------------------------
-NN MODEL
-------------------------------------
-'''
-class NN(nn.Module):
-    def __init__(self, windowsize, state_size, action_size):
-        super(NN, self).__init__()
-
-        #self.linear = nn.Linear(windowsize, 50)
-        '''
-        self.conv1 = nn.Conv1d(1, 4, 2, stride=1)
-        self.conv2 = nn.Conv1d(4, 6, 2, stride=1)
-        #self.linear1 = nn.Linear(8, 30)
-        self.linear2 = nn.Linear(48, 20)
-        #self.lstm = nn.LSTM(15, 15)
-        '''
-        self.linear2 = nn.Linear(windowsize, 10)
-        self.linear3 = nn.Linear(10, action_size)
-
-    def forward(self, x):
-        '''
-        x = F.relu( self.conv1(x) )
-        x = F.relu( self.conv2(x) )
-        x = x.view(-1, 48)
-        x = F.relu( self.linear2(x) )
-        '''
-        x = F.relu( self.linear2(x) )
-        return F.relu( self.linear3(x) )
-
 '''
 ------------------------------------
 DEEP Q NETWORK
 ------------------------------------
 '''
 class DQN():
-    def __init__(self, windowsize, state_size, action_size):
+    def __init__(self, state_size, action_size, windowsize=1):
 
         # Settings
         self.state_size = state_size
         self.action_size = action_size
         self.batchsize = 64
         self.discount_factor = 0.99
-        self.learning_rate = 0.005
+        self.learning_rate = 0.01
         self.epsilon = 1.0
         self.epsilon_decay = 0.999
         self.epsilon_min = 0.01
@@ -71,24 +41,24 @@ class DQN():
         self.position = 0
 
         # Neural nets
-        self.model = NN(windowsize, state_size, action_size)
-        self.target_model = NN(windowsize, state_size, action_size)
+        self.model = neuralnets.NN(windowsize, state_size, action_size)
+        self.target_model = neuralnets.NN(windowsize, state_size, action_size)
 
-        self.optimizer = optim.Adam(self.model.parameters()
+        self.optimizer = optim.RMSprop(self.model.parameters()
                 , lr=self.learning_rate)
 
     def get_action(self, state):
         if np.random.rand() <= self.epsilon:
             q_value = np.random.rand(self.action_size,)
-            q_value[3] = 1.
+            #q_value[3] = 1.
             return q_value
         else:
-            state = state.view(1,1,len(state))
+            state = state.view(1,len(state))
             x = Variable(state, volatile=True).type(FloatTensor)
-            q_value = self.model(x[0])
-            q_value[0][3] = 1.
+            q_value = self.model(x)
+            #q_value[0][3] = 1.
 
-            return q_value.data[0].numpy() # Torch tensor to np array
+            return q_value.data.numpy() # Torch tensor to np array
 
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())
